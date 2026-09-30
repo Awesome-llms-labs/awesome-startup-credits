@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  links:
+    name: Link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --config .lychee.toml --no-progress './**/*.md'
+          fail: true
+
+  data:
+    name: Validate data file
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate startup-credits.json
+        run: |
+          python3 - <<'EOF'
+          import json
+          from collections import Counter
+          data = json.load(open('data/startup-credits.json'))
+          assert isinstance(data, list) and data, "must be a non-empty list"
+          required = {"id", "name", "url", "category", "amount",
+                      "description", "eligibility", "verified", "verified_date", "notes"}
+          cats = {"cloud_infra", "ai_api", "software_devtools", "cash_grants"}
+          for i, e in enumerate(data):
+              missing = required - e.keys()
+              assert not missing, f"entry {i} ({e.get('name')}) missing {missing}"
+              assert e["category"] in cats, f"entry {i} bad category {e['category']}"
+              assert e["url"].startswith("https://"), f"entry {i} url must be https"
+              assert e["description"], f"entry {i} empty description"
+              assert isinstance(e["verified"], bool), f"entry {i} verified must be bool"
+              if e["verified"]:
+                  assert e["verified_date"], f"entry {i} verified but no verified_date"
+              assert e["amount"], f"entry {i} empty amount"
+          ids = [e["id"] for e in data]
+          assert len(ids) == len(set(ids)), "duplicate ids"
+          names = [e["name"] for e in data]
+          assert len(names) == len(set(names)), "duplicate names"
+          print(f"OK: {len(data)} entries")
+          print(Counter(e["category"] for e in data))
+          print(f"verified: {sum(1 for e in data if e['verified'])}, "
+                f"unverified: {sum(1 for e in data if not e['verified'])}")
+          EOF
