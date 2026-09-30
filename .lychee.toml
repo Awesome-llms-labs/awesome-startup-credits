@@ -8,7 +8,7 @@ exclude = [
   "https://replit.com",  # bot-blocking (RemoteDisconnected on plain GET)
   "https://platform.openai.com",  # 403 to automated checks; live for humans
   "https://openai\\.com",  # 403 to automated checks; live for humans
-  "https://helloalice\\.com",  # 429 rate-limits automated checks; live for humans
+  "helloalice\\.com",  # 429 rate-limits automated checks; live for humans (bare + www)
   "https://login\\.microsoft\\.com",  # login-gated; live for humans
   "https://www.akamai.com/cloud/start-ups/rise",  # 403 to automated checks; live for humans
   "https://www.ifundwomen.com/grants",  # 403 to automated checks; live for humans
